@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Metapoblacions — Taca</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; min-height: 100vh; }
+
+  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .screen.active { display: flex; }
+
+  h1 { font-size: 22px; font-weight: 600; color: #111; margin-bottom: 8px; text-align: center; }
+  p.sub { font-size: 15px; color: #666; text-align: center; margin-bottom: 32px; line-height: 1.5; }
+
+  .patch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 340px; margin-bottom: 24px; }
+  .patch-btn {
+    aspect-ratio: 1; border-radius: 12px; border: 2px solid #ddd;
+    background: #fff; font-size: 18px; font-weight: 700; color: #333;
+    cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
+  }
+  .patch-btn:active { transform: scale(0.94); }
+  .patch-btn.taken { background: #f0f0f0; color: #bbb; border-color: #e0e0e0; cursor: not-allowed; }
+  .patch-btn.mine { background: #1D9E75; border-color: #0F6E56; color: #fff; }
+
+  .state-card {
+    width: 100%; max-width: 320px; border-radius: 20px; padding: 32px 24px;
+    text-align: center; margin-bottom: 24px; transition: background .3s;
+  }
+  .state-card.occupied { background: #EAF3DE; border: 2px solid #639922; }
+  .state-card.empty { background: #FCEBEB; border: 2px solid #E24B4A; }
+  .state-icon { font-size: 56px; margin-bottom: 12px; }
+  .state-label { font-size: 22px; font-weight: 700; }
+  .state-card.occupied .state-label { color: #27500A; }
+  .state-card.empty .state-label { color: #791F1F; }
+  .state-sub { font-size: 14px; color: #666; margin-top: 6px; line-height: 1.4; }
+
+  .rule-box { background: #fff; border-radius: 12px; border: 1px solid #e0e0e0; padding: 14px 16px; width: 100%; max-width: 320px; margin-bottom: 20px; }
+  .rule-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #999; margin-bottom: 6px; }
+  .rule-text { font-size: 14px; color: #333; line-height: 1.5; }
+
+  .dau-btn {
+    width: 100%; max-width: 320px; padding: 18px; border-radius: 14px;
+    background: #111; color: #fff; font-size: 18px; font-weight: 600;
+    border: none; cursor: pointer; transition: opacity .15s; margin-bottom: 12px;
+  }
+  .dau-btn:active { opacity: .8; }
+  .dau-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .dau-result { font-size: 48px; text-align: center; margin: 8px 0; min-height: 56px; }
+  .dau-text { font-size: 14px; color: #666; text-align: center; margin-bottom: 16px; min-height: 20px; }
+
+  .patch-label { font-size: 13px; color: #999; margin-bottom: 4px; }
+  .patch-num { font-size: 32px; font-weight: 700; color: #1D9E75; margin-bottom: 4px; }
+
+  .model-badge {
+    background: #1D9E75; color: #fff; border-radius: 20px;
+    padding: 4px 14px; font-size: 13px; font-weight: 500; margin-bottom: 20px;
+  }
+  .model-badge.local { background: #378ADD; }
+  .model-badge.rescue { background: #7F77DD; }
+
+  .neighbor-info { font-size: 13px; color: #555; background: #f0f0f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; width: 100%; max-width: 320px; text-align: center; }
+
+  .wait-msg { font-size: 15px; color: #999; text-align: center; margin-top: 12px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: #1D9E75; border-radius: 50%; animation: spin .7s linear infinite; margin: 16px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="screen-pick">
+  <h1>Metapoblacions</h1>
+  <p class="sub">Tria el número de la teva taca</p>
+  <div class="patch-grid" id="patchGrid"></div>
+  <p class="wait-msg" id="waitMsg"></p>
+</div>
+
+<div class="screen" id="screen-wait">
+  <div class="patch-label">La teva taca</div>
+  <div class="patch-num" id="myPatchNum">—</div>
+  <div class="spinner"></div>
+  <p class="sub">Esperant que el professor iniciï la ronda...</p>
+</div>
+
+<div class="screen" id="screen-play">
+  <div class="patch-label">Taca</div>
+  <div class="patch-num" id="playPatchNum">—</div>
+  <div class="model-badge" id="modelBadge">Mainland-island</div>
+
+  <div class="state-card" id="stateCard">
+    <div class="state-icon" id="stateIcon">▲</div>
+    <div class="state-label" id="stateLabel">Ocupada</div>
+    <div class="state-sub" id="stateSub"></div>
+  </div>
+
+  <div class="neighbor-info" id="neighborInfo" style="display:none"></div>
+  <div class="rule-box" id="ruleBox"><div class="rule-title">Regla activa</div><div class="rule-text" id="ruleText">—</div></div>
+  <div class="dau-result" id="dauResult"></div>
+  <div class="dau-text" id="dauText"></div>
+  <button class="dau-btn" id="dauBtn" onclick="throwDau()">Tira el dau</button>
+</div>
+
+<div class="screen" id="screen-done">
+  <div class="state-card" id="doneCard">
+    <div class="state-icon" id="doneIcon">▲</div>
+    <div class="state-label" id="doneLabel">Ocupada</div>
+  </div>
+  <p class="sub" id="doneSub">Resultat enviat. Espera la propera ronda.</p>
+  <p class="wait-msg">El professor veu el teu estat al panell.</p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCF1DmDJPGebhXJADwtjTCINOvioM560tQ",
+  authDomain: "metapoblacions.firebaseapp.com",
+  databaseURL: "https://metapoblacions-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "metapoblacions",
+  storageBucket: "metapoblacions.firebasestorage.app",
+  messagingSenderId: "475814475210",
+  appId: "1:475814475210:web:521caae5154fe134a54b33"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+let myPatch = null;
+let currentState = null;
+let currentModel = 0;
+let gameState = {};
+let roundActive = false;
+let hasThrown = false;
+
+const models = [
+  { name: 'Mainland-island', cls: '', extMax: 2, colMin: 1, colMax: 4, localCol: false, rescue: false },
+  { name: 'Colonització local', cls: 'local', extMax: 2, localCol: true, rescue: false },
+  { name: 'Efecte rescat', cls: 'rescue', extMax: 2, extMaxRescued: 1, localCol: true, rescue: true }
+];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function buildGrid(n, taken) {
+  const grid = document.getElementById('patchGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'patch-btn' + (taken[i] ? ' taken' : '');
+    btn.textContent = i;
+    btn.disabled = !!taken[i];
+    btn.onclick = () => pickPatch(i);
+    grid.appendChild(btn);
+  }
+}
+
+async function pickPatch(n) {
+  const takenSnap = await get(ref(db, 'taken'));
+  const taken = takenSnap.val() || {};
+  if (taken[n]) { document.getElementById('waitMsg').textContent = 'Aquesta taca ja està agafada, tria\'n una altra.'; return; }
+  myPatch = n;
+  await set(ref(db, 'taken/' + n), true);
+  document.getElementById('myPatchNum').textContent = n;
+  show('wait');
+  listenGame();
+}
+
+function listenGame() {
+  onValue(ref(db, 'game'), snap => {
+    const g = snap.val() || {};
+    gameState = g.patches || {};
+    currentModel = g.model ?? 0;
+    roundActive = g.roundActive ?? false;
+    currentState = gameState[myPatch] ?? true;
+
+    if (roundActive && !hasThrown) {
+      showPlay();
+    } else if (!roundActive) {
+      hasThrown = false;
+      if (myPatch) show('wait');
+    }
+  });
+
+  onValue(ref(db, 'config'), snap => {
+    const c = snap.val() || {};
+    const n = c.nPatches || 10;
+    const takenRef = ref(db, 'taken');
+    onValue(takenRef, ts => {
+      buildGrid(n, ts.val() || {});
+    });
+  });
+}
+
+function getNeighborCount() {
+  let count = 0;
+  if (myPatch > 1 && gameState[myPatch - 1]) count++;
+  if (gameState[myPatch + 1]) count++;
+  return count;
+}
+
+function showPlay() {
+  show('play');
+  hasThrown = false;
+  const m = models[currentModel];
+  document.getElementById('playPatchNum').textContent = myPatch;
+  const badge = document.getElementById('modelBadge');
+  badge.textContent = m.name;
+  badge.className = 'model-badge ' + m.cls;
+
+  updateStateCard();
+
+  const nInfo = document.getElementById('neighborInfo');
+  if (m.localCol || m.rescue) {
+    const nc = getNeighborCount();
+    nInfo.style.display = 'block';
+    nInfo.textContent = `Veïns ocupats: ${nc} (taques ${myPatch > 1 ? myPatch-1 : '—'} i ${myPatch < 12 ? myPatch+1 : '—'})`;
+  } else {
+    nInfo.style.display = 'none';
+  }
+
+  updateRule();
+  document.getElementById('dauResult').textContent = '';
+  document.getElementById('dauText').textContent = '';
+  document.getElementById('dauBtn').disabled = false;
+}
+
+function updateStateCard() {
+  const card = document.getElementById('stateCard');
+  card.className = 'state-card ' + (currentState ? 'occupied' : 'empty');
+  document.getElementById('stateIcon').textContent = currentState ? '▲' : '○';
+  document.getElementById('stateLabel').textContent = currentState ? 'Ocupada' : 'Buida';
+  document.getElementById('stateSub').textContent = currentState ? 'La teva població és viva' : 'La teva taca és buida';
+}
+
+function updateRule() {
+  const m = models[currentModel];
+  const nc = getNeighborCount();
+  let text = '';
+  if (currentState) {
+    if (m.rescue && nc >= 1) {
+      text = `Estàs OCUPADA amb ${nc} veí(ns). Efecte rescat actiu: només et pots extingir si treus 1.`;
+    } else {
+      text = `Estàs OCUPADA. Si treus 1 o 2 → extinció. Si treus 3–6 → segueixes ocupada.`;
+    }
+  } else {
+    if (!m.localCol) {
+      text = `Estàs BUIDA. Si treus 1–4 → colons del continent arriben. Si treus 5–6 → segueixes buida.`;
+    } else if (nc === 0) {
+      text = `Estàs BUIDA i sense veïns ocupats. No pots ser colonitzada aquesta ronda.`;
+    } else if (nc === 1) {
+      text = `Estàs BUIDA amb 1 veí ocupat. Si treus 1–2 → colonització. Si treus 3–6 → segueixes buida.`;
+    } else {
+      text = `Estàs BUIDA amb 2 veïns ocupats. Si treus 1–4 → colonització. Si treus 5–6 → segueixes buida.`;
+    }
+  }
+  document.getElementById('ruleText').textContent = text;
+}
+
+function throwDau() {
+  if (hasThrown) return;
+  document.getElementById('dauBtn').disabled = true;
+  const roll = Math.floor(Math.random() * 6) + 1;
+  const m = models[currentModel];
+  const nc = getNeighborCount();
+  let newState = currentState;
+  let resultText = '';
+
+  if (currentState) {
+    const ep = (m.rescue && nc >= 1) ? 1 : 2;
+    if (roll <= ep) { newState = false; resultText = `Has tret ${roll} → extinció local`; }
+    else { newState = true; resultText = `Has tret ${roll} → la població sobreviu`; }
+  } else {
+    if (!m.localCol) {
+      newState = roll <= 4;
+      resultText = newState ? `Has tret ${roll} → colons del continent arriben!` : `Has tret ${roll} → cap colons`;
+    } else if (nc === 0) {
+      newState = false;
+      resultText = `Sense veïns → no hi pot haver colonització`;
+    } else {
+      const cp = nc >= 2 ? 4 : 2;
+      newState = roll <= cp;
+      resultText = newState ? `Has tret ${roll} → colonització exitosa!` : `Has tret ${roll} → cap colons`;
+    }
+  }
+
+  document.getElementById('dauResult').textContent = FACES[roll - 1];
+  document.getElementById('dauText').textContent = resultText;
+  hasThrown = true;
+
+  setTimeout(async () => {
+    await set(ref(db, 'game/patches/' + myPatch), newState);
+    const doneCard = document.getElementById('doneCard');
+    doneCard.className = 'state-card ' + (newState ? 'occupied' : 'empty');
+    document.getElementById('doneIcon').textContent = newState ? '▲' : '○';
+    document.getElementById('doneLabel').textContent = newState ? 'Ocupada' : 'Buida';
+    document.getElementById('doneSub').textContent = newState
+      ? 'Resultat enviat. La teva taca és OCUPADA.'
+      : 'Resultat enviat. La teva taca és BUIDA.';
+    show('done');
+  }, 1200);
+}
+
+show('pick');
+onValue(ref(db, 'config'), snap => {
+  const c = snap.val() || { nPatches: 10 };
+  onValue(ref(db, 'taken'), ts => {
+    buildGrid(c.nPatches || 10, ts.val() || {});
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metapoblacions — Panell Professor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #fff; min-height: 100vh; padding: 24px; }
+
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+  .top { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; }
+
+  .ctrl-card { background: #1a1d27; border-radius: 12px; padding: 14px 16px; border: 1px solid #2a2d3a; }
+  .ctrl-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+
+  .model-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mbtn { padding: 7px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1d27; color: #888; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .mbtn.active { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+  .mbtn.active.local { background: #378ADD; border-color: #378ADD; }
+  .mbtn.active.rescue { background: #7F77DD; border-color: #7F77DD; }
+
+  .n-row { display: flex; align-items: center; gap: 10px; }
+  .n-row input[type=range] { width: 100px; accent-color: #1D9E75; }
+  .n-val { font-size: 16px; font-weight: 600; color: #fff; min-width: 20px; }
+
+  .round-btn { padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .round-btn.start { background: #1D9E75; color: #fff; }
+  .round-btn.stop { background: #E24B4A; color: #fff; }
+  .round-btn:hover { opacity: .85; }
+
+  .reset-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid #333; background: transparent; color: #888; font-size: 13px; cursor: pointer; }
+  .reset-btn:hover { border-color: #555; color: #ccc; }
+
+  .eq-box { font-family: 'Courier New', monospace; font-size: 14px; color: #1D9E75; background: #0a1a13; border: 1px solid #1D9E75; border-radius: 8px; padding: 6px 12px; margin-top: 6px; }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .stat { background: #1a1d27; border-radius: 10px; padding: 12px 16px; flex: 1; border: 1px solid #2a2d3a; }
+  .stat-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .stat-val { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-val.green { color: #1D9E75; }
+  .stat-val.red { color: #E24B4A; }
+
+  .patches-wrap { margin-bottom: 20px; }
+  .patches-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+  .patches-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .patch {
+    width: 80px; height: 80px; border-radius: 12px; border: 2px solid;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; transition: all .2s; position: relative;
+  }
+  .patch.occupied { background: #0d2b1a; border-color: #1D9E75; }
+  .patch.empty { background: #2b0d0d; border-color: #E24B4A; }
+  .patch.waiting { background: #1a1d27; border-color: #444; }
+  .patch .pnum { font-size: 11px; color: #888; }
+  .patch.occupied .pnum { color: #5DCAA5; }
+  .patch.empty .pnum { color: #F09595; }
+  .patch .picon { font-size: 28px; line-height: 1; }
+  .patch .pword { font-size: 10px; }
+  .patch.occupied .pword { color: #5DCAA5; }
+  .patch.empty .pword { color: #F09595; }
+  .patch.rescue-glow { border-color: #7F77DD; box-shadow: 0 0 0 2px #7F77DD44; }
+  .rescue-dot { width: 8px; height: 8px; border-radius: 50%; background: #7F77DD; position: absolute; top: 5px; left: 5px; }
+  .neighbor-badge { position: absolute; top: 4px; right: 6px; font-size: 10px; color: #555; }
+  .patch.occupied .neighbor-badge { color: #3B6D11; }
+
+  .history-section { margin-bottom: 20px; }
+  .history-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .history-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hist-chip { font-size: 12px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 6px; padding: 4px 10px; color: #888; }
+  .hist-chip.current { border-color: #1D9E75; color: #1D9E75; }
+
+  .concept { background: #0a1520; border: 1px solid #1a3a5a; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7aafd4; line-height: 1.6; }
+  .concept b { color: #aad4f5; font-weight: 600; }
+
+  .round-status { font-size: 13px; color: #666; margin-top: 6px; }
+  .round-status.active { color: #1D9E75; }
+
+  .url-box { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
+  .url-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .url-val { font-size: 13px; color: #7F77DD; font-family: monospace; word-break: break-all; }
+  .url-hint { font-size: 12px; color: #555; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Panell del professor — Metapoblacions</h1>
+<div class="sub">Controla el model, inicia les rondes i veu l'estat en temps real</div>
+
+<div class="url-box">
+  <div class="url-label">URL per als estudiants</div>
+  <div class="url-val" id="studentUrl">—</div>
+  <div class="url-hint">Projecta aquesta URL o envia-la per WhatsApp. Els estudiants l'obren al mòbil.</div>
+</div>
+
+<div class="top">
+  <div class="ctrl-card">
+    <div class="ctrl-label">Model actiu</div>
+    <div class="model-btns">
+      <button class="mbtn active" onclick="setModel(0)">Mainland-island</button>
+      <button class="mbtn" onclick="setModel(1)">Colonització local</button>
+      <button class="mbtn" onclick="setModel(2)">Efecte rescat</button>
+    </div>
+    <div class="eq-box" id="eqBox">df/dt = c·(1−f) − e·f</div>
+  </div>
+
+  <div class="ctrl-card">
+    <div class="ctrl-label">Nombre de taques</div>
+    <div class="n-row">
+      <input type="range" min="6" max="12" value="10" step="1" id="nSlider">
+      <span class="n-val" id="nVal">10</span>
+      <button class="reset-btn" onclick="resetPatches()">Reinicia taques</button>
+    </div>
+  </div>
+
+  <div class="ctrl-card">
+    <div class="ctrl-label">Ronda</div>
+    <button class="round-btn start" id="roundBtn" onclick="toggleRound()">Inicia ronda</button>
+    <div class="round-status" id="roundStatus">Cap ronda activa</div>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-label">Ocupades</div><div class="stat-val green" id="statOcc">—</div></div>
+  <div class="stat"><div class="stat-label">Buides</div><div class="stat-val red" id="statEmpty">—</div></div>
+  <div class="stat"><div class="stat-label">f (fracció ocupada)</div><div class="stat-val" id="statF">—</div></div>
+  <div class="stat"><div class="stat-label">Ronda</div><div class="stat-val" id="statRound">0</div></div>
+</div>
+
+<div class="patches-wrap">
+  <div class="patches-label">Estat de les taques — clica per canviar manualment</div>
+  <div class="patches-row" id="patchesRow"></div>
+</div>
+
+<div class="history-section">
+  <div class="history-label">Historial de f per ronda</div>
+  <div class="history-row" id="histRow"><span class="hist-chip">—</span></div>
+</div>
+
+<div class="concept" id="conceptBox"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCF1DmDJPGebhXJADwtjTCINOvioM560tQ",
+  authDomain: "metapoblacions.firebaseapp.com",
+  databaseURL: "https://metapoblacions-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "metapoblacions",
+  storageBucket: "metapoblacions.firebasestorage.app",
+  messagingSenderId: "475814475210",
+  appId: "1:475814475210:web:521caae5154fe134a54b33"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const eqs = ['df/dt = c·(1−f) − e·f', 'df/dt = c·f·(1−f) − e·f', 'df/dt = c·f·(1−f) − e·(1−f)·f'];
+const concepts = [
+  '<b>Mainland-island:</b> hi ha una font externa de colons sempre activa. La colonització <em>no depèn</em> de f — sempre arriben propaguls independentment de quantes taques estiguin ocupades. L\'equilibri és f* = c/(c+e). Les taques funcionen de manera independent les unes de les altres.',
+  '<b>Model de Levins clàssic:</b> la colonització depèn de f — les taques buides només es colonitzen si n\'hi ha d\'ocupades a prop (veïns). Amb f baixa, els colons escassegen i la metapoblació pot col·lapsar. Les taques aïllades dels extrems de la fila queden desconnectades.',
+  '<b>Efecte rescat:</b> els immigrants de taques veïnes redueixen la taxa d\'extinció de les poblacions locals. Una taca connectada és molt més difícil d\'extingir. Compareu: les taques centrals (amb veïns) persisteixen més que les dels extrems.'
+];
+
+let currentModel = 0;
+let N = 10;
+let patches = {};
+let roundActive = false;
+let round = 0;
+let history = [];
+
+document.getElementById('studentUrl').textContent = window.location.href.replace('professor.html', 'estudiant.html');
+
+function getNeighbors(idx) {
+  let n = 0;
+  if (idx > 1 && patches[idx - 1]) n++;
+  if (idx < N && patches[idx + 1]) n++;
+  return n;
+}
+
+function renderPatches() {
+  const row = document.getElementById('patchesRow');
+  row.innerHTML = '';
+  for (let i = 1; i <= N; i++) {
+    const occ = patches[i] !== false;
+    const nc = getNeighbors(i);
+    const isRescued = currentModel === 2 && occ && nc >= 1;
+    const div = document.createElement('div');
+    div.className = 'patch ' + (patches[i] === undefined ? 'waiting' : (occ ? 'occupied' : 'empty')) + (isRescued ? ' rescue-glow' : '');
+    div.innerHTML = `
+      ${isRescued ? '<div class="rescue-dot"></div>' : ''}
+      <div class="neighbor-badge">${nc}v</div>
+      <div class="pnum">T${i}</div>
+      <div class="picon">${occ ? '▲' : '○'}</div>
+      <div class="pword">${patches[i] === undefined ? 'esperant' : (occ ? 'ocupada' : 'buida')}</div>
+    `;
+    div.onclick = () => {
+      patches[i] = !occ;
+      set(ref(db, 'game/patches/' + i), patches[i]);
+    };
+    row.appendChild(div);
+  }
+
+  const occ = Object.values(patches).filter(v => v !== false && v !== undefined).length;
+  const f = occ / N;
+  document.getElementById('statOcc').textContent = occ;
+  document.getElementById('statEmpty').textContent = N - occ;
+  document.getElementById('statF').textContent = f.toFixed(2);
+  document.getElementById('statRound').textContent = round;
+  document.getElementById('conceptBox').innerHTML = concepts[currentModel];
+}
+
+window.setModel = function(m) {
+  currentModel = m;
+  document.querySelectorAll('.mbtn').forEach((b, i) => {
+    b.className = 'mbtn' + (i === m ? ' active' + (m === 1 ? ' local' : m === 2 ? ' rescue' : '') : '');
+  });
+  document.getElementById('eqBox').textContent = eqs[m];
+  set(ref(db, 'game/model'), m);
+  renderPatches();
+};
+
+window.toggleRound = function() {
+  roundActive = !roundActive;
+  if (roundActive) {
+    round++;
+    document.getElementById('roundBtn').textContent = 'Tanca ronda';
+    document.getElementById('roundBtn').className = 'round-btn stop';
+    document.getElementById('roundStatus').textContent = `Ronda ${round} en curs — els estudiants estan tirant`;
+    document.getElementById('roundStatus').className = 'round-status active';
+  } else {
+    document.getElementById('roundBtn').textContent = 'Inicia ronda';
+    document.getElementById('roundBtn').className = 'round-btn start';
+    document.getElementById('roundStatus').textContent = 'Ronda tancada';
+    document.getElementById('roundStatus').className = 'round-status';
+    const occ = Object.values(patches).filter(v => v !== false && v !== undefined).length;
+    const f = occ / N;
+    history.push({ round, f, model: ['MI', 'CL', 'ER'][currentModel] });
+    renderHistory();
+  }
+  set(ref(db, 'game/roundActive'), roundActive);
+};
+
+window.resetPatches = function() {
+  N = parseInt(document.getElementById('nSlider').value);
+  patches = {};
+  for (let i = 1; i <= N; i++) patches[i] = true;
+  round = 0;
+  history = [];
+  roundActive = false;
+  document.getElementById('roundBtn').textContent = 'Inicia ronda';
+  document.getElementById('roundBtn').className = 'round-btn start';
+  document.getElementById('roundStatus').textContent = 'Cap ronda activa';
+  document.getElementById('roundStatus').className = 'round-status';
+  set(ref(db, 'taken'), null);
+  set(ref(db, 'game'), { patches, model: currentModel, roundActive: false });
+  set(ref(db, 'config'), { nPatches: N });
+  renderPatches();
+  renderHistory();
+};
+
+function renderHistory() {
+  const row = document.getElementById('histRow');
+  if (history.length === 0) { row.innerHTML = '<span class="hist-chip">—</span>'; return; }
+  row.innerHTML = history.map((h, i) =>
+    `<span class="hist-chip${i === history.length - 1 ? ' current' : ''}">${h.model} R${h.round}: f=${h.f.toFixed(2)}</span>`
+  ).join('');
+}
+
+document.getElementById('nSlider').addEventListener('input', function() {
+  document.getElementById('nVal').textContent = this.value;
+});
+
+onValue(ref(db, 'game/patches'), snap => {
+  const p = snap.val() || {};
+  patches = { ...patches, ...p };
+  renderPatches();
+});
+
+set(ref(db, 'config'), { nPatches: N });
+set(ref(db, 'game'), { patches: Object.fromEntries(Array.from({length: N}, (_, i) => [i+1, true])), model: 0, roundActive: false });
+for (let i = 1; i <= N; i++) patches[i] = true;
+renderPatches();
+renderHistory();
+document.getElementById('eqBox').textContent = eqs[0];
+document.getElementById('conceptBox').innerHTML = concepts[0];
+</script>
+</body>
+</html>
