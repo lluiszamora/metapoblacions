@@ -4,147 +4,229 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metapoblacions — Panell Professor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #fff; min-height: 100vh; padding: 24px; }
+:root {
+  --green: #1A7F5A;
+  --green-light: #E8F5EE;
+  --green-mid: #B8DFD0;
+  --red: #C0392B;
+  --red-light: #FDEDEB;
+  --blue: #2563EB;
+  --blue-light: #EFF4FF;
+  --purple: #6D28D9;
+  --purple-light: #F3F0FF;
+  --ink: #1A1A2E;
+  --ink-mid: #4A4A6A;
+  --ink-light: #8888AA;
+  --border: #E2E2EE;
+  --bg: #F7F7FC;
+  --white: #FFFFFF;
+  --shadow: 0 2px 12px rgba(26,26,46,.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
 
-  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
-  .sub { font-size: 13px; color: #666; margin-bottom: 20px; }
+.header {
+  background: var(--white); border-bottom: 1.5px solid var(--border);
+  padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
+  height: 64px; position: sticky; top: 0; z-index: 10; box-shadow: var(--shadow);
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--green); }
+.header-sep { width: 1.5px; height: 28px; background: var(--border); }
+.header-sub { font-size: 13px; color: var(--ink-light); }
+.round-pill {
+  display: flex; align-items: center; gap: 8px; padding: 8px 20px;
+  border-radius: 24px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; transition: all .2s; font-family: 'DM Sans', sans-serif;
+}
+.round-pill.start { background: var(--green); color: #fff; }
+.round-pill.start:hover { background: #156347; }
+.round-pill.stop { background: var(--red); color: #fff; }
+.round-pill.stop:hover { background: #a93226; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: .7; flex-shrink: 0; }
+.dot.pulse { animation: pulse 1s ease-in-out infinite; opacity: 1; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.5)} }
 
-  .top { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 20px; }
+.main { padding: 24px 32px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
 
-  .ctrl-card { background: #1a1d27; border-radius: 12px; padding: 14px 16px; border: 1px solid #2a2d3a; }
-  .ctrl-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.model-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 16px; }
+.model-tabs { display: flex; border-bottom: 1.5px solid var(--border); }
+.mtab {
+  flex: 1; padding: 14px 8px; text-align: center; font-size: 13px; font-weight: 500;
+  cursor: pointer; color: var(--ink-light); border: none; background: transparent;
+  transition: all .2s; position: relative; font-family: 'DM Sans', sans-serif;
+}
+.mtab::after { content: ''; position: absolute; bottom: -1.5px; left: 0; right: 0; height: 2.5px; background: transparent; transition: background .2s; }
+.mtab.active.m0 { color: var(--green); } .mtab.active.m0::after { background: var(--green); }
+.mtab.active.m1 { color: var(--blue); } .mtab.active.m1::after { background: var(--blue); }
+.mtab.active.m2 { color: var(--purple); } .mtab.active.m2::after { background: var(--purple); }
 
-  .model-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-  .mbtn { padding: 7px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1d27; color: #888; font-size: 13px; cursor: pointer; transition: all .15s; }
-  .mbtn.active { background: #1D9E75; border-color: #1D9E75; color: #fff; }
-  .mbtn.active.local { background: #378ADD; border-color: #378ADD; }
-  .mbtn.active.rescue { background: #7F77DD; border-color: #7F77DD; }
+.model-body { padding: 16px 20px; }
+.eq-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.eq-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-light); }
+.eq-val { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; padding: 6px 14px; border-radius: 8px; }
+.eq-val.m0 { background: var(--green-light); color: var(--green); }
+.eq-val.m1 { background: var(--blue-light); color: var(--blue); }
+.eq-val.m2 { background: var(--purple-light); color: var(--purple); }
 
-  .n-row { display: flex; align-items: center; gap: 10px; }
-  .n-row input[type=range] { width: 100px; accent-color: #1D9E75; }
-  .n-val { font-size: 16px; font-weight: 600; color: #fff; min-width: 20px; }
+.rules-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.rule-box { border-radius: 10px; padding: 12px 14px; }
+.rule-box.ext { background: var(--red-light); border: 1px solid #FCCBC7; }
+.rule-box.col { background: var(--green-light); border: 1px solid var(--green-mid); }
+.rule-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+.rule-box.ext .rule-tag { color: var(--red); }
+.rule-box.col .rule-tag { color: var(--green); }
+.rule-body { font-size: 13px; color: var(--ink); line-height: 1.5; }
 
-  .round-btn { padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
-  .round-btn.start { background: #1D9E75; color: #fff; }
-  .round-btn.stop { background: #E24B4A; color: #fff; }
-  .round-btn:hover { opacity: .85; }
+.concept-box { border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; }
+.concept-box.m0 { background: var(--green-light); color: #0D4A32; border: 1px solid var(--green-mid); }
+.concept-box.m1 { background: var(--blue-light); color: #1A3A8A; border: 1px solid #BFCEF8; }
+.concept-box.m2 { background: var(--purple-light); color: #3B1A7A; border: 1px solid #C4B8F0; }
+.concept-box b { font-weight: 600; }
 
-  .reset-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid #333; background: transparent; color: #888; font-size: 13px; cursor: pointer; }
-  .reset-btn:hover { border-color: #555; color: #ccc; }
+.patches-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
+.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-light); margin-bottom: 14px; }
+.patches-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .eq-box { font-family: 'Courier New', monospace; font-size: 14px; color: #1D9E75; background: #0a1a13; border: 1px solid #1D9E75; border-radius: 8px; padding: 6px 12px; margin-top: 6px; }
+.patch {
+  width: 84px; height: 84px; border-radius: 14px; border: 2px solid;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; transition: all .18s; position: relative;
+}
+.patch.occupied { background: var(--green-light); border-color: var(--green); }
+.patch.empty { background: var(--red-light); border-color: var(--red); }
+.patch.waiting { background: var(--bg); border-color: var(--border); border-style: dashed; }
+.patch:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(26,26,46,.14); }
+.patch .pnum { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.patch.occupied .pnum { color: var(--green); }
+.patch.empty .pnum { color: var(--red); }
+.patch.waiting .pnum { color: var(--ink-light); }
+.patch .picon { font-size: 26px; line-height: 1; }
+.patch .pword { font-size: 10px; font-weight: 500; }
+.patch.occupied .pword { color: var(--green); }
+.patch.empty .pword { color: var(--red); }
+.patch.waiting .pword { color: var(--ink-light); }
+.rescue-badge { position: absolute; top: 5px; left: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--purple); border: 2px solid var(--white); }
+.patch.rescue-glow { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(109,40,217,.15); background: var(--purple-light); }
+.nbadge { position: absolute; top: 5px; right: 7px; font-size: 9px; font-weight: 600; color: var(--ink-light); }
+.patch.occupied .nbadge { color: var(--green); }
+.patch.rescue-glow .nbadge { color: var(--purple); }
 
-  .stats-row { display: flex; gap: 10px; margin-bottom: 20px; }
-  .stat { background: #1a1d27; border-radius: 10px; padding: 12px 16px; flex: 1; border: 1px solid #2a2d3a; }
-  .stat-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-  .stat-val { font-size: 28px; font-weight: 700; color: #fff; }
-  .stat-val.green { color: #1D9E75; }
-  .stat-val.red { color: #E24B4A; }
+.sidebar { display: flex; flex-direction: column; gap: 14px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-box { background: var(--white); border-radius: 14px; border: 1.5px solid var(--border); padding: 14px 16px; box-shadow: var(--shadow); }
+.stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-light); margin-bottom: 4px; }
+.stat-val { font-size: 32px; font-weight: 600; line-height: 1; font-family: 'DM Mono', monospace; }
+.stat-val.g { color: var(--green); } .stat-val.r { color: var(--red); }
+.stat-val.i { color: var(--ink); } .stat-val.b { color: var(--blue); }
+.f-bar-track { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-top: 8px; }
+.f-bar-fill { height: 100%; border-radius: 99px; transition: width .4s ease, background .4s; }
 
-  .patches-wrap { margin-bottom: 20px; }
-  .patches-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
-  .patches-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ctrl-card { background: var(--white); border-radius: 14px; border: 1.5px solid var(--border); padding: 16px; box-shadow: var(--shadow); }
+.ctrl-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-light); margin-bottom: 10px; }
+.n-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.n-row input[type=range] { flex: 1; accent-color: var(--green); }
+.n-val { font-size: 18px; font-weight: 600; color: var(--ink); min-width: 24px; font-family: 'DM Mono', monospace; }
+.reset-btn { width: 100%; padding: 9px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 500; color: var(--ink-mid); cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+.reset-btn:hover { border-color: var(--ink-light); color: var(--ink); }
+.status-bar { padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; text-align: center; margin-top: 10px; }
+.status-bar.idle { background: var(--bg); color: var(--ink-light); border: 1px solid var(--border); }
+.status-bar.active { background: #FFF8E1; color: #7A5400; border: 1px solid #FFE082; }
 
-  .patch {
-    width: 80px; height: 80px; border-radius: 12px; border: 2px solid;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; cursor: pointer; transition: all .2s; position: relative;
-  }
-  .patch.occupied { background: #0d2b1a; border-color: #1D9E75; }
-  .patch.empty { background: #2b0d0d; border-color: #E24B4A; }
-  .patch.waiting { background: #1a1d27; border-color: #444; }
-  .patch .pnum { font-size: 11px; color: #888; }
-  .patch.occupied .pnum { color: #5DCAA5; }
-  .patch.empty .pnum { color: #F09595; }
-  .patch .picon { font-size: 28px; line-height: 1; }
-  .patch .pword { font-size: 10px; }
-  .patch.occupied .pword { color: #5DCAA5; }
-  .patch.empty .pword { color: #F09595; }
-  .patch.rescue-glow { border-color: #7F77DD; box-shadow: 0 0 0 2px #7F77DD44; }
-  .rescue-dot { width: 8px; height: 8px; border-radius: 50%; background: #7F77DD; position: absolute; top: 5px; left: 5px; }
-  .neighbor-badge { position: absolute; top: 4px; right: 6px; font-size: 10px; color: #555; }
-  .patch.occupied .neighbor-badge { color: #3B6D11; }
+.history-card { background: var(--white); border-radius: 14px; border: 1.5px solid var(--border); padding: 16px; box-shadow: var(--shadow); }
+.hist-chips { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; max-height: 180px; overflow-y: auto; }
+.hchip { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; color: var(--ink-mid); background: var(--bg); }
+.hchip.latest { border-color: var(--green); background: var(--green-light); }
+.hchip .hm { font-weight: 600; font-size: 11px; }
+.hchip .hf { font-family: 'DM Mono', monospace; font-weight: 500; }
+.hchip.latest .hf { color: var(--green); }
 
-  .history-section { margin-bottom: 20px; }
-  .history-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-  .history-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .hist-chip { font-size: 12px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 6px; padding: 4px 10px; color: #888; }
-  .hist-chip.current { border-color: #1D9E75; color: #1D9E75; }
-
-  .concept { background: #0a1520; border: 1px solid #1a3a5a; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7aafd4; line-height: 1.6; }
-  .concept b { color: #aad4f5; font-weight: 600; }
-
-  .round-status { font-size: 13px; color: #666; margin-top: 6px; }
-  .round-status.active { color: #1D9E75; }
-
-  .url-box { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
-  .url-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-  .url-val { font-size: 13px; color: #7F77DD; font-family: monospace; word-break: break-all; }
-  .url-hint { font-size: 12px; color: #555; margin-top: 4px; }
+.url-card { background: var(--ink); border-radius: 14px; padding: 14px 16px; }
+.url-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.45); margin-bottom: 6px; }
+.url-val { font-family: 'DM Mono', monospace; font-size: 12px; color: #fff; word-break: break-all; line-height: 1.5; }
+.url-hint { font-size: 11px; color: rgba(255,255,255,.35); margin-top: 6px; }
 </style>
 </head>
 <body>
 
-<h1>Panell del professor — Metapoblacions</h1>
-<div class="sub">Controla el model, inicia les rondes i veu l'estat en temps real</div>
-
-<div class="url-box">
-  <div class="url-label">URL per als estudiants</div>
-  <div class="url-val" id="studentUrl">—</div>
-  <div class="url-hint">Projecta aquesta URL o envia-la per WhatsApp. Els estudiants l'obren al mòbil.</div>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">Ecologia de poblacions · Universitat de Girona</div>
+    <div class="header-sep"></div>
+    <div class="header-sub">Dinàmica de metapoblacions</div>
+  </div>
+  <button class="round-pill start" id="roundBtn" onclick="toggleRound()">
+    <span class="dot" id="dotEl"></span>
+    Inicia ronda
+  </button>
 </div>
 
-<div class="top">
-  <div class="ctrl-card">
-    <div class="ctrl-label">Model actiu</div>
-    <div class="model-btns">
-      <button class="mbtn active" onclick="setModel(0)">Mainland-island</button>
-      <button class="mbtn" onclick="setModel(1)">Colonització local</button>
-      <button class="mbtn" onclick="setModel(2)">Efecte rescat</button>
+<div class="main">
+  <div>
+    <div class="model-card">
+      <div class="model-tabs">
+        <button class="mtab m0 active" onclick="setModel(0)">Mainland-island</button>
+        <button class="mtab m1" onclick="setModel(1)">Colonització local</button>
+        <button class="mtab m2" onclick="setModel(2)">Efecte rescat</button>
+      </div>
+      <div class="model-body">
+        <div class="eq-row">
+          <span class="eq-label">Equació</span>
+          <span class="eq-val m0" id="eqVal">df/dt = c·(1−f) − e·f</span>
+        </div>
+        <div class="rules-row">
+          <div class="rule-box ext"><div class="rule-tag">Extinció</div><div class="rule-body" id="extRule">—</div></div>
+          <div class="rule-box col"><div class="rule-tag">Colonització</div><div class="rule-body" id="colRule">—</div></div>
+        </div>
+        <div class="concept-box m0" id="conceptBox">—</div>
+      </div>
     </div>
-    <div class="eq-box" id="eqBox">df/dt = c·(1−f) − e·f</div>
-  </div>
-
-  <div class="ctrl-card">
-    <div class="ctrl-label">Nombre de taques</div>
-    <div class="n-row">
-      <input type="range" min="6" max="12" value="10" step="1" id="nSlider">
-      <span class="n-val" id="nVal">10</span>
-      <button class="reset-btn" onclick="resetPatches()">Reinicia taques</button>
+    <div class="patches-card">
+      <div class="card-title">Estat de les taques — clica per canviar manualment</div>
+      <div class="patches-row" id="patchesRow"></div>
     </div>
   </div>
 
-  <div class="ctrl-card">
-    <div class="ctrl-label">Ronda</div>
-    <button class="round-btn start" id="roundBtn" onclick="toggleRound()">Inicia ronda</button>
-    <div class="round-status" id="roundStatus">Cap ronda activa</div>
+  <div class="sidebar">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-label">Ocupades</div><div class="stat-val g" id="statOcc">—</div></div>
+      <div class="stat-box"><div class="stat-label">Buides</div><div class="stat-val r" id="statEmpty">—</div></div>
+      <div class="stat-box" style="grid-column:1/-1">
+        <div class="stat-label">f · fracció ocupada</div>
+        <div class="stat-val i" id="statF">—</div>
+        <div class="f-bar-track"><div class="f-bar-fill" id="fBar" style="width:100%;background:var(--green)"></div></div>
+      </div>
+      <div class="stat-box"><div class="stat-label">Ronda</div><div class="stat-val b" id="statRound">0</div></div>
+    </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-label">Nombre de taques</div>
+      <div class="n-row">
+        <input type="range" min="6" max="12" value="10" step="1" id="nSlider">
+        <span class="n-val" id="nVal">10</span>
+      </div>
+      <button class="reset-btn" onclick="resetPatches()">↺ Reinicia totes les taques</button>
+      <div class="status-bar idle" id="roundStatus">Cap ronda activa</div>
+    </div>
+
+    <div class="history-card">
+      <div class="ctrl-label">Historial de f per ronda</div>
+      <div class="hist-chips" id="histRow"><span style="font-size:13px;color:var(--ink-light)">Encara no hi ha rondes</span></div>
+    </div>
+
+    <div class="url-card">
+      <div class="url-label">URL per als estudiants</div>
+      <div class="url-val" id="studentUrl">—</div>
+      <div class="url-hint">Comparteix per WhatsApp o projèctala.</div>
+    </div>
   </div>
 </div>
-
-<div class="stats-row">
-  <div class="stat"><div class="stat-label">Ocupades</div><div class="stat-val green" id="statOcc">—</div></div>
-  <div class="stat"><div class="stat-label">Buides</div><div class="stat-val red" id="statEmpty">—</div></div>
-  <div class="stat"><div class="stat-label">f (fracció ocupada)</div><div class="stat-val" id="statF">—</div></div>
-  <div class="stat"><div class="stat-label">Ronda</div><div class="stat-val" id="statRound">0</div></div>
-</div>
-
-<div class="patches-wrap">
-  <div class="patches-label">Estat de les taques — clica per canviar manualment</div>
-  <div class="patches-row" id="patchesRow"></div>
-</div>
-
-<div class="history-section">
-  <div class="history-label">Historial de f per ronda</div>
-  <div class="history-row" id="histRow"><span class="hist-chip">—</span></div>
-</div>
-
-<div class="concept" id="conceptBox"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCF1DmDJPGebhXJADwtjTCINOvioM560tQ",
@@ -159,135 +241,137 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const eqs = ['df/dt = c·(1−f) − e·f', 'df/dt = c·f·(1−f) − e·f', 'df/dt = c·f·(1−f) − e·(1−f)·f'];
+const eqs = ['df/dt = c·(1−f) − e·f','df/dt = c·f·(1−f) − e·f','df/dt = c·f·(1−f) − e·(1−f)·f'];
+const extRules = [
+  'Dau 1 o 2 → extinció (e ≈ 0.33). Independent dels veïns.',
+  'Dau 1 o 2 → extinció (e ≈ 0.33). Independent dels veïns.',
+  'Sense veïns: dau 1 o 2 → extinció. Amb ≥1 veí ocupat: només dau 1 → extinció (efecte rescat).'
+];
+const colRules = [
+  'Sempre possible des del continent. Dau 1–4 → colonització (font externa constant, independent de f).',
+  '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible.',
+  '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible.'
+];
 const concepts = [
-  '<b>Mainland-island:</b> hi ha una font externa de colons sempre activa. La colonització <em>no depèn</em> de f — sempre arriben propaguls independentment de quantes taques estiguin ocupades. L\'equilibri és f* = c/(c+e). Les taques funcionen de manera independent les unes de les altres.',
-  '<b>Model de Levins clàssic:</b> la colonització depèn de f — les taques buides només es colonitzen si n\'hi ha d\'ocupades a prop (veïns). Amb f baixa, els colons escassegen i la metapoblació pot col·lapsar. Les taques aïllades dels extrems de la fila queden desconnectades.',
-  '<b>Efecte rescat:</b> els immigrants de taques veïnes redueixen la taxa d\'extinció de les poblacions locals. Una taca connectada és molt més difícil d\'extingir. Compareu: les taques centrals (amb veïns) persisteixen més que les dels extrems.'
+  '<b>Mainland-island:</b> una font externa sempre activa envia colons. La colonització <em>no depèn de f</em> — arriben propaguls independentment de quantes taques estiguin ocupades. f* = c/(c+e) ≈ 0.67. Les taques funcionen de manera independent.',
+  '<b>Levins clàssic:</b> la colonització depèn de f. Taques buides només es colonitzen si hi ha veïns ocupats prop. Taques aïllades als extrems queden desconnectades i difícils de recuperar. Risc de col·lapse en cascada si f és molt baixa.',
+  '<b>Efecte rescat:</b> immigrants de taques veïnes redueixen la taxa d\'extinció local. Taques amb veïns (marcades en blau) són molt difícils d\'extingir. Apareix un gradient de persistència: taques centrals persisteixen, taques dels extrems segueixen sent vulnerables.'
 ];
 
-let currentModel = 0;
-let N = 10;
-let patches = {};
-let roundActive = false;
-let round = 0;
-let history = [];
+let currentModel = 0, N = 10, patches = {}, roundActive = false, round = 0, history = [];
 
-document.getElementById('studentUrl').textContent = window.location.href.replace('professor.html', 'estudiant.html');
+document.getElementById('studentUrl').textContent = window.location.href.replace('professor.html','estudiant.html');
 
-function getNeighbors(idx) {
+function neighbors(i) {
   let n = 0;
-  if (idx > 1 && patches[idx - 1]) n++;
-  if (idx < N && patches[idx + 1]) n++;
+  if (i > 1 && patches[i-1] !== false && patches[i-1] !== undefined) n++;
+  if (i < N && patches[i+1] !== false && patches[i+1] !== undefined) n++;
   return n;
 }
 
 function renderPatches() {
   const row = document.getElementById('patchesRow');
   row.innerHTML = '';
+  let occCount = 0;
   for (let i = 1; i <= N; i++) {
-    const occ = patches[i] !== false;
-    const nc = getNeighbors(i);
-    const isRescued = currentModel === 2 && occ && nc >= 1;
-    const div = document.createElement('div');
-    div.className = 'patch ' + (patches[i] === undefined ? 'waiting' : (occ ? 'occupied' : 'empty')) + (isRescued ? ' rescue-glow' : '');
-    div.innerHTML = `
-      ${isRescued ? '<div class="rescue-dot"></div>' : ''}
-      <div class="neighbor-badge">${nc}v</div>
+    const occ = patches[i] !== false && patches[i] !== undefined;
+    const waiting = patches[i] === undefined;
+    const nc = neighbors(i);
+    const rescued = currentModel === 2 && occ && nc >= 1;
+    if (occ) occCount++;
+    const d = document.createElement('div');
+    d.className = 'patch ' + (waiting ? 'waiting' : occ ? 'occupied' : 'empty') + (rescued ? ' rescue-glow' : '');
+    d.innerHTML = `${rescued ? '<div class="rescue-badge"></div>' : ''}
+      <div class="nbadge">${nc}v</div>
       <div class="pnum">T${i}</div>
-      <div class="picon">${occ ? '▲' : '○'}</div>
-      <div class="pword">${patches[i] === undefined ? 'esperant' : (occ ? 'ocupada' : 'buida')}</div>
-    `;
-    div.onclick = () => {
-      patches[i] = !occ;
-      set(ref(db, 'game/patches/' + i), patches[i]);
-    };
-    row.appendChild(div);
+      <div class="picon">${waiting ? '·' : occ ? '▲' : '○'}</div>
+      <div class="pword">${waiting ? 'esperant' : occ ? 'ocupada' : 'buida'}</div>`;
+    d.onclick = () => { patches[i] = !occ; set(ref(db,'game/patches/'+i), patches[i]); };
+    row.appendChild(d);
   }
-
-  const occ = Object.values(patches).filter(v => v !== false && v !== undefined).length;
-  const f = occ / N;
-  document.getElementById('statOcc').textContent = occ;
-  document.getElementById('statEmpty').textContent = N - occ;
+  const f = occCount / N;
+  document.getElementById('statOcc').textContent = occCount;
+  document.getElementById('statEmpty').textContent = N - occCount;
   document.getElementById('statF').textContent = f.toFixed(2);
   document.getElementById('statRound').textContent = round;
-  document.getElementById('conceptBox').innerHTML = concepts[currentModel];
+  document.getElementById('fBar').style.width = (f*100)+'%';
+  document.getElementById('fBar').style.background = f > 0.5 ? 'var(--green)' : f > 0.25 ? '#F59E0B' : 'var(--red)';
+}
+
+function renderModel() {
+  const ec = ['m0','m1','m2'][currentModel];
+  const ev = document.getElementById('eqVal');
+  ev.textContent = eqs[currentModel]; ev.className = 'eq-val '+ec;
+  document.getElementById('extRule').textContent = extRules[currentModel];
+  document.getElementById('colRule').textContent = colRules[currentModel];
+  const cb = document.getElementById('conceptBox');
+  cb.innerHTML = concepts[currentModel]; cb.className = 'concept-box '+ec;
+  document.querySelectorAll('.mtab').forEach((t,i) => t.className = 'mtab m'+i+(i===currentModel?' active':''));
 }
 
 window.setModel = function(m) {
-  currentModel = m;
-  document.querySelectorAll('.mbtn').forEach((b, i) => {
-    b.className = 'mbtn' + (i === m ? ' active' + (m === 1 ? ' local' : m === 2 ? ' rescue' : '') : '');
-  });
-  document.getElementById('eqBox').textContent = eqs[m];
-  set(ref(db, 'game/model'), m);
-  renderPatches();
+  currentModel = m; renderModel(); renderPatches();
+  set(ref(db,'game/model'), m);
 };
 
 window.toggleRound = function() {
   roundActive = !roundActive;
+  const btn = document.getElementById('roundBtn');
+  const status = document.getElementById('roundStatus');
   if (roundActive) {
     round++;
-    document.getElementById('roundBtn').textContent = 'Tanca ronda';
-    document.getElementById('roundBtn').className = 'round-btn stop';
-    document.getElementById('roundStatus').textContent = `Ronda ${round} en curs — els estudiants estan tirant`;
-    document.getElementById('roundStatus').className = 'round-status active';
+    btn.className = 'round-pill stop';
+    btn.innerHTML = '<span class="dot pulse"></span> Tanca ronda ' + round;
+    status.textContent = 'Ronda ' + round + ' en curs — els estudiants estan tirant';
+    status.className = 'status-bar active';
   } else {
-    document.getElementById('roundBtn').textContent = 'Inicia ronda';
-    document.getElementById('roundBtn').className = 'round-btn start';
-    document.getElementById('roundStatus').textContent = 'Ronda tancada';
-    document.getElementById('roundStatus').className = 'round-status';
-    const occ = Object.values(patches).filter(v => v !== false && v !== undefined).length;
-    const f = occ / N;
-    history.push({ round, f, model: ['MI', 'CL', 'ER'][currentModel] });
+    btn.className = 'round-pill start';
+    btn.innerHTML = '<span class="dot"></span> Inicia ronda';
+    status.textContent = 'Ronda ' + round + ' tancada';
+    status.className = 'status-bar idle';
+    let occ = 0;
+    for (let i = 1; i <= N; i++) if (patches[i] !== false && patches[i] !== undefined) occ++;
+    history.push({ round, f: occ/N, model: ['Mainland','Col. local','Ef. rescat'][currentModel] });
     renderHistory();
   }
-  set(ref(db, 'game/roundActive'), roundActive);
+  set(ref(db,'game/roundActive'), roundActive);
 };
 
 window.resetPatches = function() {
   N = parseInt(document.getElementById('nSlider').value);
   patches = {};
   for (let i = 1; i <= N; i++) patches[i] = true;
-  round = 0;
-  history = [];
-  roundActive = false;
-  document.getElementById('roundBtn').textContent = 'Inicia ronda';
-  document.getElementById('roundBtn').className = 'round-btn start';
+  round = 0; history = []; roundActive = false;
+  document.getElementById('roundBtn').className = 'round-pill start';
+  document.getElementById('roundBtn').innerHTML = '<span class="dot"></span> Inicia ronda';
   document.getElementById('roundStatus').textContent = 'Cap ronda activa';
-  document.getElementById('roundStatus').className = 'round-status';
-  set(ref(db, 'taken'), null);
-  set(ref(db, 'game'), { patches, model: currentModel, roundActive: false });
-  set(ref(db, 'config'), { nPatches: N });
-  renderPatches();
-  renderHistory();
+  document.getElementById('roundStatus').className = 'status-bar idle';
+  set(ref(db,'taken'), null);
+  set(ref(db,'game'), { patches, model: currentModel, roundActive: false });
+  set(ref(db,'config'), { nPatches: N });
+  renderPatches(); renderHistory();
 };
 
 function renderHistory() {
   const row = document.getElementById('histRow');
-  if (history.length === 0) { row.innerHTML = '<span class="hist-chip">—</span>'; return; }
-  row.innerHTML = history.map((h, i) =>
-    `<span class="hist-chip${i === history.length - 1 ? ' current' : ''}">${h.model} R${h.round}: f=${h.f.toFixed(2)}</span>`
+  if (!history.length) { row.innerHTML = '<span style="font-size:13px;color:var(--ink-light)">Encara no hi ha rondes</span>'; return; }
+  row.innerHTML = history.slice().reverse().map((h,i) =>
+    `<div class="hchip${i===0?' latest':''}"><span class="hm">${h.model} · R${h.round}</span><span class="hf">f = ${h.f.toFixed(2)}</span></div>`
   ).join('');
 }
 
-document.getElementById('nSlider').addEventListener('input', function() {
-  document.getElementById('nVal').textContent = this.value;
-});
+document.getElementById('nSlider').addEventListener('input', function() { document.getElementById('nVal').textContent = this.value; });
 
-onValue(ref(db, 'game/patches'), snap => {
+onValue(ref(db,'game/patches'), snap => {
   const p = snap.val() || {};
   patches = { ...patches, ...p };
   renderPatches();
 });
 
-set(ref(db, 'config'), { nPatches: N });
-set(ref(db, 'game'), { patches: Object.fromEntries(Array.from({length: N}, (_, i) => [i+1, true])), model: 0, roundActive: false });
+set(ref(db,'config'), { nPatches: N });
+set(ref(db,'game'), { patches: Object.fromEntries(Array.from({length:N},(_,i)=>[i+1,true])), model:0, roundActive:false });
 for (let i = 1; i <= N; i++) patches[i] = true;
-renderPatches();
-renderHistory();
-document.getElementById('eqBox').textContent = eqs[0];
-document.getElementById('conceptBox').innerHTML = concepts[0];
+renderModel(); renderPatches(); renderHistory();
 </script>
 </body>
 </html>
