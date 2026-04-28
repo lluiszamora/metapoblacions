@@ -278,7 +278,7 @@ const concepts = [
   '<b>Efecte rescat:</b> immigrants de taques veïnes redueixen la taxa d\'extinció local. Taques amb veïns (marcades en blau) són molt difícils d\'extingir. Apareix un gradient de persistència: taques centrals persisteixen, taques dels extrems segueixen sent vulnerables.'
 ];
 
-let currentModel = 0, COLS = 4, ROWS = 4, N = 16, patches = {}, roundActive = false, round = 0, history = [];
+let currentModel = 0, COLS = 4, ROWS = 4, N = 16, patches = {}, roundActive = false, round = 0, history = [], roundPerModel = [0,0,0,0];
 
 document.getElementById('studentUrl').textContent = window.location.href.replace('professor.html','estudiant.html');
 
@@ -338,8 +338,20 @@ function renderModel() {
 }
 
 window.setModel = function(m) {
-  currentModel = m; renderModel(); renderPatches();
-  set(ref(db,'game/model'), m);
+  if (m === currentModel) return;
+  currentModel = m;
+  // Reiniciar taques a ocupades
+  patches = {};
+  for (let i = 1; i <= N; i++) patches[i] = true;
+  roundPerModel[m] = 0;
+  roundActive = false;
+  document.getElementById('roundBtn').className = 'round-pill start';
+  document.getElementById('roundBtn').innerHTML = '<span class="dot"></span> Inicia ronda';
+  document.getElementById('roundStatus').textContent = 'Model canviat — taques reiniciades';
+  document.getElementById('roundStatus').className = 'status-bar idle';
+  set(ref(db,'taken'), null);
+  set(ref(db,'game'), { patches, model: m, roundActive: false });
+  renderModel(); renderPatches();
 };
 
 window.toggleRound = function() {
@@ -347,19 +359,20 @@ window.toggleRound = function() {
   const btn = document.getElementById('roundBtn');
   const status = document.getElementById('roundStatus');
   if (roundActive) {
+    roundPerModel[currentModel]++;
     round++;
     btn.className = 'round-pill stop';
-    btn.innerHTML = '<span class="dot pulse"></span> Tanca ronda ' + round;
-    status.textContent = 'Ronda ' + round + ' en curs — els estudiants estan tirant';
+    btn.innerHTML = '<span class="dot pulse"></span> Tanca ronda ' + roundPerModel[currentModel];
+    status.textContent = 'Ronda ' + roundPerModel[currentModel] + ' en curs — els estudiants estan tirant';
     status.className = 'status-bar active';
   } else {
     btn.className = 'round-pill start';
     btn.innerHTML = '<span class="dot"></span> Inicia ronda';
-    status.textContent = 'Ronda ' + round + ' tancada';
+    status.textContent = 'Ronda ' + roundPerModel[currentModel] + ' tancada';
     status.className = 'status-bar idle';
     let occ = 0;
     for (let i = 1; i <= N; i++) if (patches[i] !== false && patches[i] !== undefined) occ++;
-    history.push({ round, f: occ/N, model: ['Mainland','Col. local','Ef. rescat','Lev+Res'][currentModel], modelIdx: currentModel });
+    history.push({ roundGlobal: round, roundModel: roundPerModel[currentModel], f: occ/N, modelIdx: currentModel });
     renderHistory();
   }
   set(ref(db,'game/roundActive'), roundActive);
@@ -413,46 +426,48 @@ function initChart() {
 function renderChart() {
   if (!fChart) return;
 
-  // Agrupar historial per model
+  // Cada model té el seu propi eix de rondes (R1, R2, R3...)
+  // Usem scatter/line amb x numèric per model independent
+  const maxRondesPerModel = Math.max(...roundPerModel, 1);
+  const labels = Array.from({length: maxRondesPerModel}, (_, i) => 'R' + (i+1));
+  fChart.data.labels = labels;
+
   const byModel = {};
   history.forEach(h => {
     if (!byModel[h.modelIdx]) byModel[h.modelIdx] = [];
-    byModel[h.modelIdx].push({ round: h.round, f: h.f });
+    byModel[h.modelIdx].push({ r: h.roundModel, f: h.f });
   });
 
-  // Màxim de rondes per eix X
-  const maxRound = history.length > 0 ? Math.max(...history.map(h => h.round)) : 4;
-  const labels = Array.from({length: maxRound}, (_, i) => 'R' + (i+1));
-  fChart.data.labels = labels;
-
   fChart.data.datasets = Object.entries(byModel).map(([mIdx, pts]) => {
-    const data = Array(maxRound).fill(null);
-    pts.forEach(p => { data[p.round - 1] = p.f; });
+    const data = Array(maxRondesPerModel).fill(null);
+    pts.forEach(p => { data[p.r - 1] = p.f; });
     return {
       label: MODEL_LABELS[mIdx],
       data,
       borderColor: MODEL_COLORS[mIdx],
-      backgroundColor: MODEL_COLORS[mIdx] + '22',
+      backgroundColor: MODEL_COLORS[mIdx] + '33',
       borderWidth: 2.5,
-      pointRadius: 5,
-      pointBackgroundColor: MODEL_COLORS[mIdx],
-      tension: 0.3,
-      spanGaps: false
+      pointRadius: 6,
+      pointBackgroundColor: '#fff',
+      pointBorderColor: MODEL_COLORS[mIdx],
+      pointBorderWidth: 2.5,
+      tension: 0.25,
+      spanGaps: false,
+      fill: false
     };
   });
 
-  // Línia f* = 0.67 (referència Mainland-island)
-  const fstarDataset = {
-    label: 'f* teòric (0.67)',
-    data: Array(maxRound).fill(0.67),
+  // Línia f* = 0.67
+  fChart.data.datasets.push({
+    label: 'f* = 0.67',
+    data: Array(maxRondesPerModel).fill(0.67),
     borderColor: '#1A7F5A',
     borderWidth: 1.5,
-    borderDash: [6, 4],
+    borderDash: [6,4],
     pointRadius: 0,
     fill: false,
     tension: 0
-  };
-  fChart.data.datasets.push(fstarDataset);
+  });
 
   fChart.update();
 }
@@ -461,7 +476,7 @@ function renderHistory() {
   const row = document.getElementById('histRow');
   if (!history.length) { row.innerHTML = '<span style="font-size:13px;color:var(--ink-light)">Encara no hi ha rondes</span>'; return; }
   row.innerHTML = history.slice().reverse().map((h,i) =>
-    `<div class="hchip${i===0?' latest':''}"><span class="hm">${MODEL_LABELS[h.modelIdx]} · R${h.round}</span><span class="hf">f = ${h.f.toFixed(2)}</span></div>`
+    `<div class="hchip${i===0?' latest':''}"><span class="hm">${MODEL_LABELS[h.modelIdx]} · R${h.roundModel}</span><span class="hf">f = ${h.f.toFixed(2)}</span></div>`
   ).join('');
   renderChart();
 }
@@ -481,3 +496,4 @@ renderModel(); renderPatches(); renderHistory(); initChart();
 </script>
 </body>
 </html>
+
