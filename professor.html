@@ -88,7 +88,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 
 .patches-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
 .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-light); margin-bottom: 14px; }
-.patches-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.patches-row { display: grid; grid-template-columns: repeat(4, 84px); gap: 8px; }
 
 .patch {
   width: 84px; height: 84px; border-radius: 14px; border: 2px solid;
@@ -203,10 +203,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 
     <div class="ctrl-card">
       <div class="ctrl-label">Nombre de taques</div>
-      <div class="n-row">
-        <input type="range" min="6" max="12" value="10" step="1" id="nSlider">
-        <span class="n-val" id="nVal">10</span>
-      </div>
+      <div class="n-row" style="font-size:14px;color:var(--ink-mid)">Quadrícula 4×4 — 16 taques</div>
       <button class="reset-btn" onclick="resetPatches()">↺ Reinicia totes les taques</button>
       <div class="status-bar idle" id="roundStatus">Cap ronda activa</div>
     </div>
@@ -258,15 +255,23 @@ const concepts = [
   '<b>Efecte rescat:</b> immigrants de taques veïnes redueixen la taxa d\'extinció local. Taques amb veïns (marcades en blau) són molt difícils d\'extingir. Apareix un gradient de persistència: taques centrals persisteixen, taques dels extrems segueixen sent vulnerables.'
 ];
 
-let currentModel = 0, N = 10, patches = {}, roundActive = false, round = 0, history = [];
+let currentModel = 0, COLS = 4, ROWS = 4, N = 16, patches = {}, roundActive = false, round = 0, history = [];
 
 document.getElementById('studentUrl').textContent = window.location.href.replace('professor.html','estudiant.html');
 
+function getNeighborIds(i) {
+  // Quadrícula 4x4, índex 1-16
+  const row = Math.floor((i-1) / COLS);
+  const col = (i-1) % COLS;
+  const ids = [];
+  if (row > 0) ids.push(i - COLS);        // dalt
+  if (row < ROWS-1) ids.push(i + COLS);   // baix
+  if (col > 0) ids.push(i - 1);           // esquerra
+  if (col < COLS-1) ids.push(i + 1);      // dreta
+  return ids;
+}
 function neighbors(i) {
-  let n = 0;
-  if (i > 1 && patches[i-1] !== false && patches[i-1] !== undefined) n++;
-  if (i < N && patches[i+1] !== false && patches[i+1] !== undefined) n++;
-  return n;
+  return getNeighborIds(i).filter(id => patches[id] !== false && patches[id] !== undefined).length;
 }
 
 function renderPatches() {
@@ -338,7 +343,7 @@ window.toggleRound = function() {
 };
 
 window.resetPatches = function() {
-  N = parseInt(document.getElementById('nSlider').value);
+  N = 16;
   patches = {};
   for (let i = 1; i <= N; i++) patches[i] = true;
   round = 0; history = []; roundActive = false;
@@ -360,7 +365,7 @@ function renderHistory() {
   ).join('');
 }
 
-document.getElementById('nSlider').addEventListener('input', function() { document.getElementById('nVal').textContent = this.value; });
+
 
 onValue(ref(db,'game/patches'), snap => {
   const p = snap.val() || {};
@@ -368,8 +373,8 @@ onValue(ref(db,'game/patches'), snap => {
   renderPatches();
 });
 
-set(ref(db,'config'), { nPatches: N });
-set(ref(db,'game'), { patches: Object.fromEntries(Array.from({length:N},(_,i)=>[i+1,true])), model:0, roundActive:false });
+set(ref(db,'config'), { nPatches: 16, cols: 4, rows: 4 });
+set(ref(db,'game'), { patches: Object.fromEntries(Array.from({length:16},(_,i)=>[i+1,true])), model:0, roundActive:false });
 for (let i = 1; i <= N; i++) patches[i] = true;
 renderModel(); renderPatches(); renderHistory();
 </script>
