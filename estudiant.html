@@ -60,6 +60,7 @@
   }
   .model-badge.local { background: #378ADD; }
   .model-badge.rescue { background: #7F77DD; }
+  .model-badge.full { background: #C0392B; }
 
   .neighbor-info { font-size: 13px; color: #555; background: #f0f0f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; width: 100%; max-width: 320px; text-align: center; }
 
@@ -140,7 +141,8 @@ let hasThrown = false;
 const models = [
   { name: 'Mainland-island', cls: '', extMax: 2, colMin: 1, colMax: 4, localCol: false, rescue: false },
   { name: 'Colonització local', cls: 'local', extMax: 2, localCol: true, rescue: false },
-  { name: 'Efecte rescat', cls: 'rescue', extMax: 2, extMaxRescued: 1, localCol: true, rescue: true }
+  { name: 'Efecte rescat', cls: 'rescue', extMax: 2, extMaxRescued: 1, localCol: true, rescue: true },
+  { name: 'Levins + Rescat', cls: 'rescue', extMax: 2, extMaxRescued: 1, localCol: true, rescue: true }
 ];
 
 function show(id) {
