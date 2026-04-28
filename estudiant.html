@@ -150,8 +150,9 @@ function show(id) {
 
 function buildGrid(n, taken) {
   const grid = document.getElementById('patchGrid');
+  grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
   grid.innerHTML = '';
-  for (let i = 1; i <= n; i++) {
+  for (let i = 1; i <= 16; i++) {
     const btn = document.createElement('button');
     btn.className = 'patch-btn' + (taken[i] ? ' taken' : '');
     btn.textContent = i;
@@ -200,11 +201,22 @@ function listenGame() {
   });
 }
 
+const COLS = 4, ROWS = 4;
+function getNeighborIds(i) {
+  const row = Math.floor((i-1) / COLS);
+  const col = (i-1) % COLS;
+  const ids = [];
+  if (row > 0) ids.push(i - COLS);
+  if (row < ROWS-1) ids.push(i + COLS);
+  if (col > 0) ids.push(i - 1);
+  if (col < COLS-1) ids.push(i + 1);
+  return ids;
+}
 function getNeighborCount() {
-  let count = 0;
-  if (myPatch > 1 && gameState[myPatch - 1]) count++;
-  if (gameState[myPatch + 1]) count++;
-  return count;
+  return getNeighborIds(myPatch).filter(id => gameState[id] === true).length;
+}
+function getNeighborList() {
+  return getNeighborIds(myPatch);
 }
 
 function showWaitNextRound() {
@@ -265,7 +277,7 @@ function updateRule() {
     if (!m.localCol) {
       text = `Estàs BUIDA. Si treus 1–4 → colons del continent arriben. Si treus 5–6 → segueixes buida.`;
     } else if (nc === 0) {
-      text = `Estàs BUIDA i sense veïns ocupats. No pots ser colonitzada aquesta ronda.`;
+      text = `Estàs BUIDA i sense veïns ocupats (T${getNeighborList().join(', T')}). No pots ser colonitzada aquesta ronda.`;
     } else if (nc === 1) {
       text = `Estàs BUIDA amb 1 veí ocupat. Si treus 1–2 → colonització. Si treus 3–6 → segueixes buida.`;
     } else {
