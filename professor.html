@@ -62,6 +62,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 .mtab.active.m0 { color: var(--green); } .mtab.active.m0::after { background: var(--green); }
 .mtab.active.m1 { color: var(--blue); } .mtab.active.m1::after { background: var(--blue); }
 .mtab.active.m2 { color: var(--purple); } .mtab.active.m2::after { background: var(--purple); }
+.mtab.active.m3 { color: var(--red); } .mtab.active.m3::after { background: var(--red); }
 
 .model-body { padding: 16px 20px; }
 .eq-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -70,6 +71,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 .eq-val.m0 { background: var(--green-light); color: var(--green); }
 .eq-val.m1 { background: var(--blue-light); color: var(--blue); }
 .eq-val.m2 { background: var(--purple-light); color: var(--purple); }
+.eq-val.m3 { background: #FDEDEB; color: var(--red); }
 
 .rules-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .rule-box { border-radius: 10px; padding: 12px 14px; }
@@ -84,6 +86,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 .concept-box.m0 { background: var(--green-light); color: #0D4A32; border: 1px solid var(--green-mid); }
 .concept-box.m1 { background: var(--blue-light); color: #1A3A8A; border: 1px solid #BFCEF8; }
 .concept-box.m2 { background: var(--purple-light); color: #3B1A7A; border: 1px solid #C4B8F0; }
+.concept-box.m3 { background: #FDEDEB; color: #7A1A1A; border: 1px solid #FCCBC7; }
 .concept-box b { font-weight: 600; }
 
 .patches-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
@@ -147,6 +150,13 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 .url-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.45); margin-bottom: 6px; }
 .url-val { font-family: 'DM Mono', monospace; font-size: 12px; color: #fff; word-break: break-all; line-height: 1.5; }
 .url-hint { font-size: 11px; color: rgba(255,255,255,.35); margin-top: 6px; }
+
+.chart-card { background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-light); margin-bottom: 14px; }
+.chart-wrap { position: relative; height: 200px; }
+.risk-zone { position: absolute; bottom: 30px; left: 48px; right: 8px; height: 48px; background: rgba(192,57,43,.07); border-top: 1.5px dashed rgba(192,57,43,.3); pointer-events: none; }
+.risk-label { position: absolute; right: 10px; bottom: 32px; font-size: 10px; color: var(--red); font-weight: 600; letter-spacing:.04em; }
+.fstar-line { position: absolute; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -170,6 +180,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
         <button class="mtab m0 active" onclick="setModel(0)">Mainland-island</button>
         <button class="mtab m1" onclick="setModel(1)">Colonització local</button>
         <button class="mtab m2" onclick="setModel(2)">Efecte rescat</button>
+        <button class="mtab m3" onclick="setModel(3)">Levins + Rescat</button>
       </div>
       <div class="model-body">
         <div class="eq-row">
@@ -208,6 +219,15 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
       <div class="status-bar idle" id="roundStatus">Cap ronda activa</div>
     </div>
 
+    <div class="chart-card">
+      <div class="chart-title">Evolució de f per ronda</div>
+      <div class="chart-wrap">
+        <div class="risk-zone"></div>
+        <div class="risk-label">RISC D'EXTINCIÓ</div>
+        <canvas id="fChart"></canvas>
+      </div>
+    </div>
+
     <div class="history-card">
       <div class="ctrl-label">Historial de f per ronda</div>
       <div class="hist-chips" id="histRow"><span style="font-size:13px;color:var(--ink-light)">Encara no hi ha rondes</span></div>
@@ -221,6 +241,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -238,16 +259,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const eqs = ['df/dt = c·(1−f) − e·f','df/dt = c·f·(1−f) − e·f','df/dt = c·f·(1−f) − e·(1−f)·f'];
+const eqs = ['df/dt = c·(1−f) − e·f','df/dt = c·f·(1−f) − e·f','df/dt = c·f·(1−f) − e·(1−f)·f','df/dt = c·f·(1−f) − e·(1−f)·f'];
 const extRules = [
   'Dau 1 o 2 → extinció (e ≈ 0.33). Independent dels veïns.',
   'Dau 1 o 2 → extinció (e ≈ 0.33). Independent dels veïns.',
+  'Sense veïns: dau 1 o 2 → extinció. Amb ≥1 veí ocupat: només dau 1 → extinció (efecte rescat).',
   'Sense veïns: dau 1 o 2 → extinció. Amb ≥1 veí ocupat: només dau 1 → extinció (efecte rescat).'
 ];
 const colRules = [
   'Sempre possible des del continent. Dau 1–4 → colonització (font externa constant, independent de f).',
   '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible.',
-  '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible.'
+  '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible.',
+  '2 veïns ocupats → dau 1–4. 1 veí ocupat → dau 1–2. Cap veí → impossible. (Igual que Levins)'
 ];
 const concepts = [
   '<b>Mainland-island:</b> una font externa sempre activa envia colons. La colonització <em>no depèn de f</em> — arriben propaguls independentment de quantes taques estiguin ocupades. f* = c/(c+e) ≈ 0.67. Les taques funcionen de manera independent.',
@@ -282,7 +305,7 @@ function renderPatches() {
     const occ = patches[i] !== false && patches[i] !== undefined;
     const waiting = patches[i] === undefined;
     const nc = neighbors(i);
-    const rescued = currentModel === 2 && occ && nc >= 1;
+    const rescued = (currentModel === 2 || currentModel === 3) && occ && nc >= 1;
     if (occ) occCount++;
     const d = document.createElement('div');
     d.className = 'patch ' + (waiting ? 'waiting' : occ ? 'occupied' : 'empty') + (rescued ? ' rescue-glow' : '');
@@ -304,7 +327,7 @@ function renderPatches() {
 }
 
 function renderModel() {
-  const ec = ['m0','m1','m2'][currentModel];
+  const ec = ['m0','m1','m2','m3'][currentModel];
   const ev = document.getElementById('eqVal');
   ev.textContent = eqs[currentModel]; ev.className = 'eq-val '+ec;
   document.getElementById('extRule').textContent = extRules[currentModel];
@@ -336,7 +359,7 @@ window.toggleRound = function() {
     status.className = 'status-bar idle';
     let occ = 0;
     for (let i = 1; i <= N; i++) if (patches[i] !== false && patches[i] !== undefined) occ++;
-    history.push({ round, f: occ/N, model: ['Mainland','Col. local','Ef. rescat'][currentModel] });
+    history.push({ round, f: occ/N, model: ['Mainland','Col. local','Ef. rescat','Lev+Res'][currentModel], modelIdx: currentModel });
     renderHistory();
   }
   set(ref(db,'game/roundActive'), roundActive);
@@ -357,12 +380,90 @@ window.resetPatches = function() {
   renderPatches(); renderHistory();
 };
 
+const MODEL_COLORS = ['#1A7F5A','#2563EB','#6D28D9','#C0392B'];
+const MODEL_LABELS = ['Mainland-island','Col. local','Ef. rescat','Levins+Rescat'];
+let fChart = null;
+
+function initChart() {
+  const ctx = document.getElementById('fChart').getContext('2d');
+  fChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 12, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => `f = ${ctx.parsed.y.toFixed(2)}` } },
+        annotation: {}
+      },
+      scales: {
+        x: { title: { display: true, text: 'Ronda', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#E2E2EE' } },
+        y: {
+          min: 0, max: 1,
+          title: { display: true, text: 'f (fracció ocupada)', font: { family: 'DM Sans', size: 11 } },
+          grid: { color: '#E2E2EE' },
+          ticks: { callback: v => v.toFixed(1) }
+        }
+      }
+    }
+  });
+}
+
+function renderChart() {
+  if (!fChart) return;
+
+  // Agrupar historial per model
+  const byModel = {};
+  history.forEach(h => {
+    if (!byModel[h.modelIdx]) byModel[h.modelIdx] = [];
+    byModel[h.modelIdx].push({ round: h.round, f: h.f });
+  });
+
+  // Màxim de rondes per eix X
+  const maxRound = history.length > 0 ? Math.max(...history.map(h => h.round)) : 4;
+  const labels = Array.from({length: maxRound}, (_, i) => 'R' + (i+1));
+  fChart.data.labels = labels;
+
+  fChart.data.datasets = Object.entries(byModel).map(([mIdx, pts]) => {
+    const data = Array(maxRound).fill(null);
+    pts.forEach(p => { data[p.round - 1] = p.f; });
+    return {
+      label: MODEL_LABELS[mIdx],
+      data,
+      borderColor: MODEL_COLORS[mIdx],
+      backgroundColor: MODEL_COLORS[mIdx] + '22',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointBackgroundColor: MODEL_COLORS[mIdx],
+      tension: 0.3,
+      spanGaps: false
+    };
+  });
+
+  // Línia f* = 0.67 (referència Mainland-island)
+  const fstarDataset = {
+    label: 'f* teòric (0.67)',
+    data: Array(maxRound).fill(0.67),
+    borderColor: '#1A7F5A',
+    borderWidth: 1.5,
+    borderDash: [6, 4],
+    pointRadius: 0,
+    fill: false,
+    tension: 0
+  };
+  fChart.data.datasets.push(fstarDataset);
+
+  fChart.update();
+}
+
 function renderHistory() {
   const row = document.getElementById('histRow');
   if (!history.length) { row.innerHTML = '<span style="font-size:13px;color:var(--ink-light)">Encara no hi ha rondes</span>'; return; }
   row.innerHTML = history.slice().reverse().map((h,i) =>
-    `<div class="hchip${i===0?' latest':''}"><span class="hm">${h.model} · R${h.round}</span><span class="hf">f = ${h.f.toFixed(2)}</span></div>`
+    `<div class="hchip${i===0?' latest':''}"><span class="hm">${MODEL_LABELS[h.modelIdx]} · R${h.round}</span><span class="hf">f = ${h.f.toFixed(2)}</span></div>`
   ).join('');
+  renderChart();
 }
 
 
@@ -376,7 +477,7 @@ onValue(ref(db,'game/patches'), snap => {
 set(ref(db,'config'), { nPatches: 16, cols: 4, rows: 4 });
 set(ref(db,'game'), { patches: Object.fromEntries(Array.from({length:16},(_,i)=>[i+1,true])), model:0, roundActive:false });
 for (let i = 1; i <= N; i++) patches[i] = true;
-renderModel(); renderPatches(); renderHistory();
+renderModel(); renderPatches(); renderHistory(); initChart();
 </script>
 </body>
 </html>
