@@ -104,11 +104,12 @@
 
 <div class="screen" id="screen-done">
   <div class="state-card" id="doneCard">
-    <div class="state-icon" id="doneIcon">▲</div>
+    <div class="state-icon" id="doneIcon">&#9650;</div>
     <div class="state-label" id="doneLabel">Ocupada</div>
   </div>
   <p class="sub" id="doneSub">Resultat enviat. Espera la propera ronda.</p>
-  <p class="wait-msg">El professor veu el teu estat al panell.</p>
+  <div class="spinner"></div>
+  <p class="wait-msg">Quan el professor iniciï la ronda, el dau s'activarà automàticament.</p>
 </div>
 
 <script type="module">
@@ -176,24 +177,26 @@ function listenGame() {
     const g = snap.val() || {};
     gameState = g.patches || {};
     currentModel = g.model ?? 0;
-    roundActive = g.roundActive ?? false;
+    const newRoundActive = g.roundActive ?? false;
     currentState = gameState[myPatch] ?? true;
 
-    if (roundActive && !hasThrown) {
-      showPlay();
-    } else if (!roundActive) {
+    // El professor ha tancat la ronda -> prepara la seguent
+    if (roundActive && !newRoundActive) {
+      roundActive = false;
       hasThrown = false;
-      if (myPatch) show('wait');
+      showWaitNextRound();
+      return;
     }
-  });
 
-  onValue(ref(db, 'config'), snap => {
-    const c = snap.val() || {};
-    const n = c.nPatches || 10;
-    const takenRef = ref(db, 'taken');
-    onValue(takenRef, ts => {
-      buildGrid(n, ts.val() || {});
-    });
+    // El professor ha obert una ronda nova -> activa el dau
+    if (!roundActive && newRoundActive) {
+      roundActive = true;
+      hasThrown = false;
+      showPlay();
+      return;
+    }
+
+    roundActive = newRoundActive;
   });
 }
 
@@ -202,6 +205,16 @@ function getNeighborCount() {
   if (myPatch > 1 && gameState[myPatch - 1]) count++;
   if (gameState[myPatch + 1]) count++;
   return count;
+}
+
+function showWaitNextRound() {
+  // Actualitza la pantalla 'done' amb l'estat actual i missatge d'espera
+  const doneCard = document.getElementById('doneCard');
+  doneCard.className = 'state-card ' + (currentState ? 'occupied' : 'empty');
+  document.getElementById('doneIcon').textContent = currentState ? '▲' : '○';
+  document.getElementById('doneLabel').textContent = currentState ? 'Ocupada' : 'Buida';
+  document.getElementById('doneSub').textContent = 'Ronda acabada. Espera la seguent...';
+  show('done');
 }
 
 function showPlay() {
@@ -262,7 +275,7 @@ function updateRule() {
   document.getElementById('ruleText').textContent = text;
 }
 
-function throwDau() {
+window.throwDau = function throwDau() {
   if (hasThrown) return;
   document.getElementById('dauBtn').disabled = true;
   const roll = Math.floor(Math.random() * 6) + 1;
